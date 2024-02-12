@@ -112,8 +112,8 @@ def export_csv():
     return Response(
         csv_data,
         mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment;filename=attendance_{formatted_date}.csv'}
+        headers={'Content-Disposition': f'attachment;filename=attendance_{course}_{formatted_date}.csv'}
     )
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

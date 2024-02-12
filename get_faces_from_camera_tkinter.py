@@ -10,8 +10,10 @@ import tkinter as tk
 from tkinter import font as tkFont
 from PIL import Image, ImageTk
 import features_extraction_to_csv
-import attendance_taker
-import app
+# import attendance_taker
+# import app
+import webbrowser
+import subprocess
 
 # Use frontal face detector of Dlib
 detector = dlib.get_frontal_face_detector()
@@ -91,6 +93,11 @@ class Face_Register:
         self.label_cnt_face_in_database['text'] = "0"
         self.existing_faces_cnt = 0
         self.log_all["text"] = "Face images and `features_all.csv` removed!"
+        
+    def show(self):
+        subprocess.Popen(["python", "app.py"]) 
+        url = "http://127.0.0.1:5000/"
+        webbrowser.open(url, new=0, autoraise=True)
 
     def GUI_get_input_name(self):
         name = self.input_name.get().strip()  # Get the name input and remove leading/trailing spaces
@@ -104,6 +111,17 @@ class Face_Register:
         self.input_name_char = f"{name}_{id_number}"  # Concatenate name and ID number
         self.create_face_folder()
         self.label_cnt_face_in_database['text'] = str(self.existing_faces_cnt)
+        
+    # def start_flask_server(self):
+    #     # Run the Flask server as a subprocess
+    #     subprocess.Popen(["python", "app.py"]) 
+    #     messagebox.showinfo("showinfo", "Server started. click on show attendance to continue")  
+        
+        
+    def take_attendance(self):
+        # Run the Flask server as a subprocess
+        subprocess.Popen(["python", "attendance_taker.py"]) 
+
 
     def GUI_info(self):
         tk.Label(self.frame_right_info,
@@ -121,6 +139,10 @@ class Face_Register:
         self.label_face_cnt.grid(row=3, column=2, columnspan=3, sticky=tk.W, padx=5, pady=2)
 
         self.label_warning.grid(row=4, column=0, columnspan=3, sticky=tk.W, padx=5, pady=2)
+        # tk.Button(self.frame_right_info,
+        #           text='Start Server',
+        #           command=self.start_flask_server,
+        #   bg='#90EE90').grid(row=4, column=1, columnspan=3, sticky=tk.W, padx=5, pady=2)
 
         # # Step 1: Clear old data
         # tk.Label(self.frame_right_info,
@@ -134,18 +156,25 @@ class Face_Register:
                 # Step 1: Clear old data
         tk.Label(self.frame_right_info,
                  font=self.font_step_title,
-                 text="Step 1: Take Attendance").grid(row=5, column=0, columnspan=2, sticky=tk.W, padx=5, pady=20)
+                 text="Step 1: Take Asttendance").grid(row=5, column=0, columnspan=2, sticky=tk.W, padx=5, pady=20)
+        
+        self.reg = tk.Button(self.frame_right_info,
+                  text='Register Students',
+                  command=self.process)
+        
+        self.reg.grid(row=6, column=2, columnspan=3, sticky=tk.W, padx=5, pady=2)
         tk.Button(self.frame_right_info,
                   text='Take Attendance',
-                  command=attendance_taker.main).grid(row=6, column=0, columnspan=3, sticky=tk.W, padx=5, pady=2)
+                  command=self.take_attendance).grid(row=6, column=0, columnspan=3, sticky=tk.W, padx=5, pady=2)
         
         
         # tk.Label(self.frame_right_info,
         #          font=self.font_step_title,
         #          text="Step 1: Show Attendance").grid(row=5, column=2, columnspan=2, sticky=tk.W, padx=5, pady=20)
+        
         tk.Button(self.frame_right_info,
                   text='Show Attendance',
-                  command=app.app.run).grid(row=6, column=2, columnspan=3, sticky=tk.W, padx=5, pady=2)
+                  command=self.show).grid(row=6, column=1, columnspan=3, sticky=tk.W, padx=5, pady=2)
         # Step 2: Input name and create folders for face
         tk.Label(self.frame_right_info,
                  font=self.font_step_title,
@@ -336,6 +365,9 @@ class Face_Register:
             img_PhotoImage = ImageTk.PhotoImage(image=img_Image)
             self.label.img_tk = img_PhotoImage
             self.label.configure(image=img_PhotoImage)
+            
+            self.reg.config(state="disabled")
+            
 
         # Refresh frame
         self.win.after(20, self.process)
@@ -346,7 +378,7 @@ class Face_Register:
         self.pre_work_mkdir()
         self.check_existing_faces_cnt()
         self.GUI_info()
-        self.process()
+        # self.process()
         self.win.mainloop()
 
 
