@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Registration</title>
+</head>
+<body>
+    <h1>Face Registration</h1>
+    <video id="video_feed" autoplay></video>
+    <form action="/register_face" method="post" id="register_form">
+        <input type="hidden" id="name" name="name">
+        <input type="hidden" id="faces_cnt" name="faces_cnt">
+        <input type="hidden" id="width_start" name="width_start">
+        <input type="hidden" id="height_start" name="height_start">
+        <input type="hidden" id="width" name="width">
+        <input type="hidden" id="height" name="height">
+        <input type="hidden" id="out_of_range" name="out_of_range">
+        <input type="submit" value="Register Face" id="register_btn">
+    </form>
+    <script>
+        const video = document.getElementById('video_feed');
+        const registerForm = document.getElementById('register_form');
+        const registerBtn = document.getElementById('register_btn');
+
+        registerForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const frame = canvas.toDataURL('image/jpeg');
+            const formData = new FormData(registerForm);
+            formData.append('frame', frame);
+            fetch('/register_face', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.text())
+              .then(data => alert(data));
+        });
+
+        // Start video stream
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Access to camera was denied!', err);
+            });
+
+        // Fill hidden fields with face data
+        video.addEventListener('loadedmetadata', () => {
+            registerBtn.disabled = false;
+            setInterval(() => {
+                const context = document.createElement('canvas').getContext('2d');
+                context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+                const faceData = detectFace(context);
+                if (faceData) {
+                    document.getElementById('name').value = prompt('Enter name:');
+                    document.getElementById('faces_cnt').value = faceData.num_faces;
+                    document.getElementById('width_start').value = faceData.rects[0].x;
+                    document.getElementById('height_start').value = faceData.rects[0].y;
+                    document.getElementById('width').value = faceData.rects[0].width;
+                    document.getElementById('height').value = faceData.rects[0].height;
+                    document.getElementById('out_of_range').value = faceData.out_of_range;
+                }
+            }, 1000);
+        });
+
+        // Function to detect faces
+        function detectFace(context) {
+            const imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+            const grayImage = cv.cvtColor(imageData, cv.COLOR_RGBA2GRAY);
+            const faces = new cv.RectVector();
+            const faceCascade = new cv.CascadeClassifier();
+            faceCascade.load('haarcascade_frontalface_default.xml');
+            faceCascade.detectMultiScale(grayImage, faces);
+            const num_faces = faces.size();
+            const rects = [];
+            for (let i = 0; i < num_faces; i++) {
+                const faceRect = faces.get(i);
+                rects.push({
+                    x: faceRect.x,
+                    y: faceRect.y,
+                    width: faceRect.width,
+                    height: faceRect.height
+                });
+            }
+            return {
+                num_faces: num_faces,
+                rects: rects,
+                out_of_range: num_faces > 1 || num_faces === 0 || rects[0].x < 0 || rects[0].y < 0 ||
+                             rects[0].width < 100 || rects[0].height < 100 ||
+                             rects[0].x + rects[0].width > context.canvas.width ||
+                             rects[0].y + rects[0].height > context.canvas.height
+            };
+        }
+    </script>
+</body>
+</html>

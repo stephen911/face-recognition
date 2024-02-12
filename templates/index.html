@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 10px 10px 0 0;
+            font-size: 24px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .form-control {
+            font-size: 16px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            padding: 10px 20px;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            padding: 10px 20px;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header text-center">Attendance Tracker</div>
+                <form action="/attendance" method="POST" id="attendance-form">
+                    <div class="mb-3">
+                        <label for="selected-date" class="form-label">Select Date:</label>
+                        <input
+                            type="date"
+                            id="selected-date"
+                            name="selected_date"
+                            value="{{selected_date}}"
+                            class="form-control"
+                            required
+                        />
+                    </div>
+                    <div class="mb-3">
+                        <label for="course" class="form-label">Select Course:</label>
+                        <select id="course" name="course" class="form-control" required>
+                            {% for course in courses %}
+                            <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Show Attendance
+                    </button>
+                    <a
+                        id="export-csv-link"
+                        href="#"
+                        class="btn btn-primary btn-block"
+                    >Export CSV</a
+                    >
+                </form>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">Attendance Data for {{selected_course}}</div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Index Number</th>
+                            <th>Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for name, id, time in attendance_data %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ name }}</td>
+                            <td>{{ id }}</td>
+                            <td>{{ time }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if no_data %}
+                    <div class="alert alert-warning" role="alert">
+                        No attendance data available for the selected date.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Function to update export CSV link with selected course value
+    function updateExportCSVLink() {
+        var selectedDate = document.getElementById("selected-date").value;
+        var selectedCourse = document.getElementById("course").value;
+        var exportCSVLink = document.getElementById("export-csv-link");
+        exportCSVLink.href =
+            "/export_csv?selected_date=" +
+            encodeURIComponent(selectedDate) +
+            "&course=" +
+            encodeURIComponent(selectedCourse);
+    }
+
+    // Event listener to update export CSV link when course selection changes
+    document
+        .getElementById("course")
+        .addEventListener("change", updateExportCSVLink);
+
+    // Initial call to update export CSV link
+    updateExportCSVLink();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
